@@ -1,0 +1,45 @@
+import shap
+import sklearn
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+First, load the diabetes dataset and specify the different types of features. Then, clean it and put it into a DataFrame with named columns.
+
+data = sklearn.datasets.load_diabetes()
+target_feature = 'y'
+continuous_features = data.feature_names
+data_df = pd.DataFrame(data.data, columns=data.feature_names)
+After loading and cleaning the data, split the datapoints into training and test sets. Assemble separate datasets for the full sample and the test data.
+
+X_train, X_test, y_train, y_test = train_test_split(data_df, data.target, test_size=0.2, random_state=7)
+
+train_data = X_train.copy()
+test_data = X_test.copy()
+train_data[target_feature] = y_train
+test_data[target_feature] = y_test
+data.feature_names
+Train a nearest-neighbors classifier on the training data.
+
+model = RandomForestRegressor(random_state=0)
+model.fit(X_train, y_train)
+Create Model and Data Insights
+from raiwidgets import ResponsibleAIDashboard
+from responsibleai import RAIInsights
+
+rai_insights = RAIInsights(model, train_data, test_data, target_feature, 'regression',
+                               categorical_features=[])
+
+# Interpretability
+rai_insights.explainer.add()
+# Error Analysis
+rai_insights.error_analysis.add()
+# Counterfactuals: accepts total number of counterfactuals to generate, the range that their label should fall under, 
+# and a list of strings of categorical feature names
+rai_insights.counterfactual.add(total_CFs=20, desired_range=[50, 120])
+Once all the desired components have been loaded, compute insights on the test set.
+
+rai_insights.compute()
+Finally, visualize and explore the model insights. Use the resulting widget or follow the link to view this in a new tab.
+
+ResponsibleAIDashboard(rai_insights)
